@@ -86,21 +86,7 @@ func main() {
     } else {
 		logger.Sugar().Info("Successfully connected to Redis")
 	}
-	// Test storing and retrieving simple string
-	ctx := context.Background()
-	// Store simple string
-	err = redisClient.Set(ctx, "foo", "bar", 0).Err()
-	if err != nil {
-		logger.Sugar().Fatalf("Failed to store to Redis: %v", err)
-	}
-	// Retrieve simple string
-	val, err := redisClient.Get(ctx, "foo").Result()
-	if err != nil {
-		logger.Sugar().Fatalf("Failed to retrieve from Redis: %v", err)
-	} else {
-		logger.Sugar().Infof("Retrieved foo from cach: %s", val)
-	}
-
+	
 	registerAgent()
 
 	// Define a WaitGroup

@@ -26,6 +26,23 @@ func sqlDataRequestHandler() http.HandlerFunc {
 		logger.Debug("Entering sqlDataRequestHandler")
 		// Start a new span with the context that has a timeout
 
+		// TODO: now tested simple get and retrieve from redis, but now make it cache the request. (see in uva pod logs)
+		// Test storing and retrieving simple string
+		ctx := context.Background()
+		// Store simple string
+		err := redisClient.Set(ctx, "foo", "bar", 0).Err()
+		if err != nil {
+			logger.Sugar().Fatalf("***************************Failed to store to Redis: %v", err)
+		}
+		// Retrieve simple string
+		val, err := redisClient.Get(ctx, "foo").Result()
+		if err != nil {
+			logger.Sugar().Fatalf("***************************Failed to retrieve from Redis: %v", err)
+		} else {
+			logger.Sugar().Infof("***************************Retrieved foo from cach: %s", val)
+		}
+
+
 		ctxWithTimeout, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 		defer cancel()
 
