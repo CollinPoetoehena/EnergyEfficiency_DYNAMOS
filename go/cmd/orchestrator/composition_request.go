@@ -115,6 +115,13 @@ func pickArchetypeBasedOnWeight() (*api.Archetype, error) {
 		return nil, fmt.Errorf("no archetypes available")
 	}
 
+	// Debug to print possible archetype names
+	archetypeNames := make([]string, len(archeTypes))
+	for i, archetype := range archeTypes {
+		archetypeNames[i] = archetype.Name // or any other field you want to print
+	}
+	logger.Sugar().Infof("Possible archetypes: %v", archetypeNames)
+
 	lightest := archeTypes[0]
 
 	// Iterate to find the one with the lowest weight
