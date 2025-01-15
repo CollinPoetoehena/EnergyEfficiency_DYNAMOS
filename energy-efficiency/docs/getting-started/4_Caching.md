@@ -34,3 +34,4 @@ kubectl port-forward svc/redis -n caching 6379:6379
 redis-cli -h localhost -p 30006 ping
 # Expected result: PONG
 ```
+Also, test with Go code for example, see go/agent/main.go for an example of how this is done.

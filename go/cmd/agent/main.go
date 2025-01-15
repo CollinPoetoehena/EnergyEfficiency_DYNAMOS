@@ -78,7 +78,6 @@ func main() {
 		Addr:     "redis.caching.svc.cluster.local:6379", // Use node port specified in redis.yaml
 		Password: "",               // No password set
         DB:       0,                // Use default DB
-		Protocol: 2,  				// Connection protocol
     })
     // Test Redis connection
 	_, err = redisClient.Ping(context.Background()).Result()

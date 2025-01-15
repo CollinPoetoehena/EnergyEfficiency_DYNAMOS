@@ -5,8 +5,12 @@ metadata:
   namespace: caching
 data:
   redis.conf: |
+    # Ensure redis accepts connections from other pods (default is within same host/pod: 127.0.0.1)
     bind 0.0.0.0
+    # Disable protection mode to allow services to connect to Redis (protetection if required is better 
+    # configured outside Redis, such as Kubernetes NetworkPolicies to restrict which pods have access to Redis)
     protected-mode no
+    # Set empty password for Redis authentication, this simplifies connection logic
     requirepass ""
 ---
 apiVersion: apps/v1
