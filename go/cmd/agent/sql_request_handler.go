@@ -55,6 +55,7 @@ func sqlDataRequestHandler() http.HandlerFunc {
 
 		// Get the matching composition request and determine our role
 		// /agents/jobs/UVA/jorrit-3141334
+		logger.Sugar().Debug("Getting composition request")
 		compositionRequest, err := getCompositionRequest(sqlDataRequest.User.UserName, sqlDataRequest.RequestMetadata.JobId)
 		if err != nil {
 			http.Error(w, "No job found for this user", http.StatusBadRequest)
@@ -65,6 +66,7 @@ func sqlDataRequestHandler() http.HandlerFunc {
 		correlationId := uuid.New().String()
 
 		// Switch on the role we have in this data request
+		logger.Sugar().Debug("Switching on role for this data request")
 		if strings.EqualFold(compositionRequest.Role, "computeProvider") {
 			ctx, err = handleSqlComputeProvider(ctx, compositionRequest.LocalJobName, compositionRequest, sqlDataRequest, correlationId)
 			if err != nil {
@@ -111,7 +113,8 @@ func sqlDataRequestHandler() http.HandlerFunc {
 			span.AddAttributes(trace.Int64Attribute("sqlDataRequestHandler.proto.messageSize", int64(len(msgBytes))))
 			span.AddAttributes(trace.Int64Attribute("sqlDataRequestHandler.json.messageSize", int64(len(jsonBytes))))
 			span.AddAttributes(trace.Int64Attribute("sqlDataRequestHandler.String.messageSize", int64(len(msComm.Result))))
-			logger.Sugar().Debugf("Result: %s", msComm.Result)
+			logger.Sugar().Debugf("Got result (size): %d", len(msComm.Result))
+			// logger.Sugar().Debugf("Result: %s", msComm.Result)
 
 			//Handle response information
 			w.WriteHeader(http.StatusOK)
@@ -127,6 +130,7 @@ func sqlDataRequestHandler() http.HandlerFunc {
 
 // handleSqlAll means we do all work for this request, not third part involved (computeToData archeType)
 func handleSqlAll(ctx context.Context, jobName string, compositionRequest *pb.CompositionRequest, sqlDataRequest *pb.SqlDataRequest, correlationId string) (context.Context, error) {
+	logger.Sugar().Debug("Handling sql all")
 	// Create msChain and deploy job.
 
 	ctx, span := trace.StartSpan(ctx, serviceName+"/func: handleSqlAll")
@@ -170,6 +174,8 @@ func handleSqlAll(ctx context.Context, jobName string, compositionRequest *pb.Co
 // handleSqlComputeProvider means we have a computeProvider role only (dataThroughTtp archeType)
 // We are responsible for forwarding the request to all dataProviders.
 func handleSqlComputeProvider(ctx context.Context, jobName string, compositionRequest *pb.CompositionRequest, sqlDataRequest *pb.SqlDataRequest, correlationId string) (context.Context, error) {
+	logger.Sugar().Debug("Handling sql compute provider")
+
 	ctx, span := trace.StartSpan(ctx, serviceName+"/func: handleSqlComputeProvider")
 	defer span.End()
 
