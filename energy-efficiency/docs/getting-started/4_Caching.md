@@ -21,3 +21,16 @@ Afterwards you should be able to see the caching namespace and the redis service
 2025-01-14T15:18:29.760Z | 1:M 14 Jan 2025 15:18:29.760 * Server initialized
 2025-01-14T15:18:29.760Z | 1:M 14 Jan 2025 15:18:29.760 * Ready to accept connections tcp  
 ```
+
+Further steps:
+```sh
+# Install redis tools so that you can use the redis-cli in WSL
+sudo apt update
+sudo apt install redis-tools
+
+# Port-forward redis service in Kubernetes (when redis pod and service in kubernetes are running):
+kubectl port-forward svc/redis -n caching 6379:6379
+# Test connectivity with redis (it is exposed through a node port in redis.yaml):
+redis-cli -h localhost -p 30006 ping
+# Expected result: PONG
+```

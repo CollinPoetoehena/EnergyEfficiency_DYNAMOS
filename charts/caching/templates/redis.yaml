@@ -1,3 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: caching
+data:
+  redis.conf: |
+    bind 0.0.0.0
+    protected-mode no
+    requirepass ""
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,6 +29,15 @@ spec:
         image: redis:{{ .Values.redis.image }}
         ports:
         - containerPort: 6379
+        volumeMounts:
+        - name: redis-config
+          mountPath: /usr/local/etc/redis/redis.conf
+          subPath: redis.conf
+        command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+      volumes:
+      - name: redis-config
+        configMap:
+          name: redis-config
 ---
 apiVersion: v1
 kind: Service
@@ -31,3 +51,6 @@ spec:
     - protocol: TCP
       port: 6379
       targetPort: 6379
+      nodePort: 30006
+  # Allow external access with NodePort, such as using redis-cli in WSL
+  type: NodePort

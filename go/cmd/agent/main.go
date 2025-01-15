@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/redis/go-redis/v9"
 	"github.com/Jorrit05/DYNAMOS/pkg/api"
 	"github.com/Jorrit05/DYNAMOS/pkg/etcd"
 	"github.com/Jorrit05/DYNAMOS/pkg/lib"
@@ -42,6 +43,7 @@ var (
 	receiveMutex  = &sync.Mutex{}
 
 	clientSet = getKubeClient()
+	redisClient     *redis.Client
 )
 
 type dataResponse struct {
@@ -54,6 +56,7 @@ type waitingJob struct {
 	nrOfDataStewards int
 }
 
+// In Go this main() function will be called when running the Docker container (init(), if present, is called before main() in Go)
 func main() {
 	serviceName = os.Getenv("DATA_STEWARD_NAME")
 
@@ -69,6 +72,35 @@ func main() {
 	conn = lib.GetGrpcConnection(grpcAddr)
 	defer conn.Close()
 	c = lib.InitializeSidecarMessaging(conn, &pb.InitRequest{ServiceName: fmt.Sprintf("%s-in", serviceName), RoutingKey: fmt.Sprintf("%s-in", serviceName), QueueAutoDelete: false})
+
+	// Initialize Redis client
+    redisClient = redis.NewClient(&redis.Options{
+		Addr:     "redis.caching.svc.cluster.local:6379", // Use node port specified in redis.yaml
+		Password: "",               // No password set
+        DB:       0,                // Use default DB
+		Protocol: 2,  				// Connection protocol
+    })
+    // Test Redis connection
+	_, err = redisClient.Ping(context.Background()).Result()
+    if err != nil {
+        logger.Sugar().Fatalf("Failed to connect to Redis: %v", err)
+    } else {
+		logger.Sugar().Info("Successfully connected to Redis")
+	}
+	// Test storing and retrieving simple string
+	ctx := context.Background()
+	// Store simple string
+	err = redisClient.Set(ctx, "foo", "bar", 0).Err()
+	if err != nil {
+		logger.Sugar().Fatalf("Failed to store to Redis: %v", err)
+	}
+	// Retrieve simple string
+	val, err := redisClient.Get(ctx, "foo").Result()
+	if err != nil {
+		logger.Sugar().Fatalf("Failed to retrieve from Redis: %v", err)
+	} else {
+		logger.Sugar().Infof("Retrieved foo from cach: %s", val)
+	}
 
 	registerAgent()
 

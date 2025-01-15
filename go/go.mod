@@ -13,6 +13,7 @@ require (
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/websocket v1.5.0
 	github.com/rabbitmq/amqp091-go v1.10.0
+	github.com/redis/go-redis/v9 v9.7.0
 	github.com/stretchr/testify v1.9.0
 	github.com/tsenart/vegeta/v12 v12.12.0
 	go.etcd.io/etcd/api/v3 v3.5.12
@@ -32,6 +33,8 @@ replace github.com/docker/distribution => github.com/docker/distribution v2.7.1+
 require (
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/census-instrumentation/opencensus-proto v0.4.1 // indirect
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
