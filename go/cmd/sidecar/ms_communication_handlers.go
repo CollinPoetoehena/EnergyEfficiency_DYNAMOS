@@ -42,6 +42,8 @@ import (
 func SendDataThroughAMQ(ctx context.Context, data *pb.MicroserviceCommunication, s *serverInstance) (*emptypb.Empty, error) {
 	logger.Debug("Starting lib.SendDataThroughAMQ")
 
+	// TODO: add compression here with gzip. Only thing I have to look for is decompressing when it is received.
+
 	ctx, span := trace.StartSpan(ctx, "sidecar SendDataThroughAMQ/func:")
 
 	// Marshaling google.protobuf.Struct to Proto wire format

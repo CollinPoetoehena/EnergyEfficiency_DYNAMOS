@@ -143,6 +143,7 @@ func NewConfiguration(
 // returns:
 // - none
 func (s *Configuration) StartGrpcServer() {
+	// TODO: gRPC compression (only add it and then it is done automatically decompressed by gRPC)
 
 	go func() {
 		logger.Sugar().Infof("Start listening on port: %v", s.Port)
