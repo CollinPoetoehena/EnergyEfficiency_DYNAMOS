@@ -17,6 +17,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
+	"github.com/redis/go-redis/v9"
 )
 
 // Getting the SQL request through HTTP. This means the request is coming from the user. So it can be either a computeToData or DataThroughTtp request.
@@ -25,23 +26,6 @@ func sqlDataRequestHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger.Debug("Entering sqlDataRequestHandler")
 		// Start a new span with the context that has a timeout
-
-		// TODO: now tested simple get and retrieve from redis, but now make it cache the request. (see in uva pod logs)
-		// Test storing and retrieving simple string
-		ctx := context.Background()
-		// Store simple string
-		err := redisClient.Set(ctx, "foo", "bar", 0).Err()
-		if err != nil {
-			logger.Sugar().Fatalf("***************************Failed to store to Redis: %v", err)
-		}
-		// Retrieve simple string
-		val, err := redisClient.Get(ctx, "foo").Result()
-		if err != nil {
-			logger.Sugar().Fatalf("***************************Failed to retrieve from Redis: %v", err)
-		} else {
-			logger.Sugar().Infof("***************************Retrieved foo from cach: %s", val)
-		}
-
 
 		ctxWithTimeout, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 		defer cancel()
@@ -78,9 +62,39 @@ func sqlDataRequestHandler() http.HandlerFunc {
 			http.Error(w, "No job found for this user", http.StatusBadRequest)
 			return
 		}
+		logger.Sugar().Debugf("Composition request: %+v", compositionRequest)
 
 		// Generate correlationID for this request
 		correlationId := uuid.New().String()
+
+		// TODO: could we do handling the cache here and skip below and only send the data from the cache if a hit is found?
+		// then we can handle the cache here and return the response and status and skip all below parts?
+		// TODO: only thing maybe is the checking of the role for this request? So, maybe we need to add it in the below ifs?
+		// TODO: now tested simple get and retrieve from redis, but now make it cache the request. (see in uva pod logs)
+		// // Create context (required for Redis)
+		// ctx := context.Background()
+		// Create cache key based on request (use existing context (ctx))
+		// TODO: change to something else maybe, now we just use the compositionRequest which could be good
+		cacheKey := fmt.Sprintf("composition:%s:%s", compositionRequest.JobName, sqlDataRequest.User.UserName)
+		logger.Sugar().Debugf("Cache key: %+s", cacheKey)
+		// Check if the response is already cached
+		cachedResponse, err := redisClient.Get(ctx, cacheKey).Result()
+		if err == nil {
+			// Cache hit: Return cached response
+			logger.Sugar().Infof("Cache hit for key: %s", cacheKey)
+			// Handle response information
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(cachedResponse))
+			// Return to stop the function (cache hit found, no need to process further)
+			return
+		} else if err != redis.Nil {
+			// Redis error
+			logger.Sugar().Errorf("Redis error when checking cache in sqlDataRequest: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		// Cache miss: Process the request further
+		logger.Sugar().Infof("Cache miss for key: %s", cacheKey)
 
 		// Switch on the role we have in this data request
 		logger.Sugar().Debug("Switching on role for this data request")
@@ -132,6 +146,16 @@ func sqlDataRequestHandler() http.HandlerFunc {
 			span.AddAttributes(trace.Int64Attribute("sqlDataRequestHandler.String.messageSize", int64(len(msComm.Result))))
 			logger.Sugar().Debugf("Got result (size): %d", len(msComm.Result))
 			// logger.Sugar().Debugf("Result: %s", msComm.Result)
+
+			// TODO: if code gets to here, no cache hit is found, so store data to cache
+			// Store the response in the cache with a TTL (Time-To-Live)
+			// TODO: set higher cache TTL when done experimenting, such as 30 minutes
+			// TODO: tested and it automatically removes it after the time set, in this case slightly longer than 1 minute, probably because of the result size
+			logger.Debug("Storing result in cache...")
+			err = redisClient.Set(ctx, cacheKey, msComm.Result, 1*time.Minute).Err()
+			if err != nil {
+				logger.Sugar().Errorf("Failed to cache response: %v", err)
+			}
 
 			//Handle response information
 			w.WriteHeader(http.StatusOK)
