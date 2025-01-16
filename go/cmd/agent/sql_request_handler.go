@@ -67,14 +67,18 @@ func sqlDataRequestHandler() http.HandlerFunc {
 		// Generate correlationID for this request
 		correlationId := uuid.New().String()
 
-		// TODO: could we do handling the cache here and skip below and only send the data from the cache if a hit is found?
-		// then we can handle the cache here and return the response and status and skip all below parts?
-		// TODO: only thing maybe is the checking of the role for this request? So, maybe we need to add it in the below ifs?
-		// TODO: now tested simple get and retrieve from redis, but now make it cache the request. (see in uva pod logs)
-		// // Create context (required for Redis)
-		// ctx := context.Background()
-		// Create cache key based on request (use existing context (ctx))
-		// TODO: change to something else maybe, now we just use the compositionRequest which could be good
+		// Get the role
+		role := compositionRequest.Role
+		logger.Sugar().Debugf("Role for data request: %+s", role)
+		// Check role before caching functionality
+		if !strings.EqualFold(role, "computeProvider") && !strings.EqualFold(role, "all") {
+			logger.Sugar().Warnf("Unknown role or unexpected HTTP request: %s", compositionRequest.Role)
+			http.Error(w, "Bad request", http.StatusBadRequest)
+			return
+		}
+
+		// Create cache key based on request (use existing context (ctx) for redis)
+		// Do this after all the policy checks (including role check)
 		cacheKey := fmt.Sprintf("composition:%s:%s", compositionRequest.JobName, sqlDataRequest.User.UserName)
 		logger.Sugar().Debugf("Cache key: %+s", cacheKey)
 		// Check if the response is already cached
@@ -98,7 +102,7 @@ func sqlDataRequestHandler() http.HandlerFunc {
 
 		// Switch on the role we have in this data request
 		logger.Sugar().Debug("Switching on role for this data request")
-		if strings.EqualFold(compositionRequest.Role, "computeProvider") {
+		if strings.EqualFold(role, "computeProvider") {
 			ctx, err = handleSqlComputeProvider(ctx, compositionRequest.LocalJobName, compositionRequest, sqlDataRequest, correlationId)
 			if err != nil {
 				logger.Sugar().Errorf("Error in computeProvider role: %v", err)
@@ -106,18 +110,14 @@ func sqlDataRequestHandler() http.HandlerFunc {
 				return
 			}
 
-		} else if strings.EqualFold(compositionRequest.Role, "all") {
+		} else if strings.EqualFold(role, "all") {
 			ctx, err = handleSqlAll(ctx, compositionRequest.LocalJobName, compositionRequest, sqlDataRequest, correlationId)
 			if err != nil {
 				logger.Sugar().Errorf("Error in all role: %v", err)
 				http.Error(w, "Internal server error", http.StatusInternalServerError)
 				return
 			}
-		} else {
-			logger.Sugar().Warnf("Unknown role or unexpected HTTP request: %s", compositionRequest.Role)
-			http.Error(w, "Bad request", http.StatusBadRequest)
-			return
-		}
+		} 
 
 		// Create a channel to receive the response
 		responseChan := make(chan dataResponse)
@@ -147,14 +147,14 @@ func sqlDataRequestHandler() http.HandlerFunc {
 			logger.Sugar().Debugf("Got result (size): %d", len(msComm.Result))
 			// logger.Sugar().Debugf("Result: %s", msComm.Result)
 
-			// TODO: if code gets to here, no cache hit is found, so store data to cache
 			// Store the response in the cache with a TTL (Time-To-Live)
-			// TODO: set higher cache TTL when done experimenting, such as 30 minutes
-			// TODO: tested and it automatically removes it after the time set, in this case slightly longer than 1 minute, probably because of the result size
+			// If code gets here no cache hit is found
 			logger.Debug("Storing result in cache...")
-			err = redisClient.Set(ctx, cacheKey, msComm.Result, 1*time.Minute).Err()
+			err = redisClient.Set(ctx, cacheKey, msComm.Result, 5*time.Minute).Err()
 			if err != nil {
 				logger.Sugar().Errorf("Failed to cache response: %v", err)
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
 			}
 
 			//Handle response information
