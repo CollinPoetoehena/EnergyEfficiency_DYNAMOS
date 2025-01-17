@@ -173,6 +173,14 @@ func (s *serverInstance) Consume(in *pb.ConsumeRequest, stream pb.RabbitMQ_Consu
 func (s *serverInstance) SendData(ctx context.Context, data *pb.MicroserviceCommunication) (*pb.ContinueReceiving, error) {
 	logger.Sugar().Debugf("Starting (to AMQ) lib.SendData: %v", data.RequestMetadata.DestinationQueue)
 
+	// Logging of data send for compression testing
+	logger.Sugar().Debugf("**********************Microservice communication type (in go/cmd/sidecar/grpc_server.go): %s", data.Type)
+	logger.Sugar().Debugf("**********************Microservice communication request type (in go/cmd/sidecar/grpc_server.go): %s", data.RequestType)
+	logger.Sugar().Debugf("**********************Microservice communication data size (in go/cmd/sidecar/grpc_server.go): %d", len(data.RequestType))
+	logger.Sugar().Debugf("**********************Microservice communication data size (in go/cmd/sidecar/grpc_server.go): %d", len(data.RequestType))
+	logger.Sugar().Debugf("**********************Microservice communication result (in go/cmd/sidecar/grpc_server.go): %s", data.Result)
+	// TODO: compress result again here
+
 	ctx, span, err := lib.StartRemoteParentSpan(ctx, "sidecar SendData/func:", data.Traces)
 	if err != nil {
 		logger.Sugar().Warnf("Error starting span: %v", err)

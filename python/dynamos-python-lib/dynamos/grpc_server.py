@@ -95,6 +95,12 @@ class MicroserviceServicer(msCommServer.MicroserviceServicer):
         Send the data to the next microservice in the chain.
         """
         self.logger.debug(f"Starting MicroserviceServicer grpc_server.py/SendData: {msComm.request_metadata.destination_queue}")
+        # Logging of data send for compression testing
+        self.logger.debug(f"**********************Microservice communication type (in python/dynamos-python-lib/dynamos/grpc_server.py): {msComm.type}")
+        self.logger.debug(f"**********************Microservice communication request type (in python/dynamos-python-lib/dynamos/grpc_server.py): {msComm.request_type}")
+        self.logger.debug(f"**********************Microservice communication data size (in python/dynamos-python-lib/dynamos/grpc_server.py): {len(msComm.data)}")
+        self.logger.debug(f"**********************Microservice communication result (in python/dynamos-python-lib/dynamos/grpc_server.py): {msComm.result}")
+        # TODO: compress result here with gzip
 
         span = trace.get_current_span()
         try:

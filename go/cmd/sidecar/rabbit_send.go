@@ -244,6 +244,14 @@ func (s *serverInstance) SendMicroserviceComm(ctx context.Context, in *pb.Micros
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
+	// Logging of data send for compression testing
+	logger.Sugar().Debugf("**********************Microservice communication type (in go/cmd/sidecar/rabbit_send.go): %s", in.Type)
+	logger.Sugar().Debugf("**********************Microservice communication request type (in go/cmd/sidecar/rabbit_send.go): %s", in.RequestType)
+	logger.Sugar().Debugf("**********************Microservice communication data size (in go/cmd/sidecar/rabbit_send.go): %d", len(in.RequestType))
+	logger.Sugar().Debugf("**********************Microservice communication result (in go/cmd/sidecar/rabbit_send.go): %s", in.Result)
+	logger.Sugar().Debugf("**********************Microservice communication data (in go/cmd/sidecar/rabbit_send.go): %v", data)
+	// TODO: compress something in data here, such as .Result?
+
 	message := amqp.Publishing{
 		CorrelationId: in.RequestMetadata.CorrelationId,
 		Body:          data,

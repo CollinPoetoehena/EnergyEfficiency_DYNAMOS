@@ -46,6 +46,13 @@ func (s *SharedServer) InitTracer(ctx context.Context, in *pb.ServiceName) (*emp
 func (s *SharedServer) SendData(ctx context.Context, data *pb.MicroserviceCommunication) (*pb.ContinueReceiving, error) {
 	logger.Sugar().Debugf("Starting (to next MS) lib.SendData: %v", data.RequestMetadata.DestinationQueue)
 
+	// Logging of data send for compression testing
+	logger.Sugar().Debugf("**********************Microservice communication type (in go/pkg/lib/grpc_server.go): %s", data.Type)
+	logger.Sugar().Debugf("**********************Microservice communication request type (in go/pkg/lib/grpc_server.go): %s", data.RequestType)
+	logger.Sugar().Debugf("**********************Microservice communication data size (in go/pkg/lib/grpc_server.go): %d", len(data.RequestType))
+	logger.Sugar().Debugf("**********************Microservice communication result (in go/pkg/lib/grpc_server.go): %d", len(data.Result))
+	// TODO: compress result again here
+
 	ctx, span, err := StartRemoteParentSpan(ctx, fmt.Sprintf("%s SendData/func:", s.ServiceName), data.Traces)
 	if err != nil {
 		logger.Sugar().Warnf("Error starting span: %v", err)
