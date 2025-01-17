@@ -24,6 +24,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -174,12 +175,17 @@ func (s *serverInstance) SendData(ctx context.Context, data *pb.MicroserviceComm
 	logger.Sugar().Debugf("Starting (to AMQ) lib.SendData: %v", data.RequestMetadata.DestinationQueue)
 
 	// Logging of data send for compression testing
+	// TODO compression: remove logging later when done
 	logger.Sugar().Debugf("**********************Microservice communication type (in go/cmd/sidecar/grpc_server.go): %s", data.Type)
 	logger.Sugar().Debugf("**********************Microservice communication request type (in go/cmd/sidecar/grpc_server.go): %s", data.RequestType)
-	logger.Sugar().Debugf("**********************Microservice communication data size (in go/cmd/sidecar/grpc_server.go): %d", len(data.RequestType))
-	logger.Sugar().Debugf("**********************Microservice communication data size (in go/cmd/sidecar/grpc_server.go): %d", len(data.RequestType))
+	// Convert the google.protobuf.Struct to a JSON string
+    dataJSON, err := protojson.Marshal(data.Data)
+    if err != nil {
+        logger.Sugar().Errorf("Failed to marshal data to JSON: %s", err)
+    }
+	logger.Sugar().Debugf("**********************Microservice communication data (in go/cmd/sidecar/grpc_server.go): %s", dataJSON)
 	logger.Sugar().Debugf("**********************Microservice communication result (in go/cmd/sidecar/grpc_server.go): %s", data.Result)
-	// TODO: compress result again here
+	// TODO compression: compress result again here
 
 	ctx, span, err := lib.StartRemoteParentSpan(ctx, "sidecar SendData/func:", data.Traces)
 	if err != nil {

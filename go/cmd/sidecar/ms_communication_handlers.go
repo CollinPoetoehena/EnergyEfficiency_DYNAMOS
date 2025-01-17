@@ -42,7 +42,7 @@ import (
 func SendDataThroughAMQ(ctx context.Context, data *pb.MicroserviceCommunication, s *serverInstance) (*emptypb.Empty, error) {
 	logger.Debug("Starting lib.SendDataThroughAMQ")
 
-	// TODO: add compression here with gzip. Only thing I have to look for is decompressing when it is received.
+	// TODO compression: compression probably does not have to be done here, it is done in the SendData that calls this function!?!?
 
 	ctx, span := trace.StartSpan(ctx, "sidecar SendDataThroughAMQ/func:")
 

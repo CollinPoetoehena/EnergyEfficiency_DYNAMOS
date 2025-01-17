@@ -30,6 +30,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -238,19 +239,43 @@ func (s *serverInstance) SendPolicyUpdate(ctx context.Context, in *pb.PolicyUpda
 }
 
 func (s *serverInstance) SendMicroserviceComm(ctx context.Context, in *pb.MicroserviceCommunication) (*emptypb.Empty, error) {
+	// Logging of data send for compression testing 
+	// TODO compression: remove logging later when done
+	logger.Sugar().Debugf("**********************Microservice communication type (in go/cmd/sidecar/rabbit_send.go): %s", in.Type)
+	logger.Sugar().Debugf("**********************Microservice communication request type (in go/cmd/sidecar/rabbit_send.go): %s", in.RequestType)
+	// Convert the google.protobuf.Struct to a JSON string
+    dataJSON, err := protojson.Marshal(in.Data)
+    if err != nil {
+        logger.Sugar().Errorf("Failed to marshal data to JSON: %s", err)
+        return nil, status.Error(codes.Internal, err.Error())
+    }
+    logger.Sugar().Debugf("**********************Microservice communication data (in go/cmd/sidecar/rabbit_send.go): %s", dataJSON)
+    logger.Sugar().Debugf("**********************Microservice communication result (in go/cmd/sidecar/rabbit_send.go): %s", in.Result)
+    // TODO compression: compress something in data here, such as .Result?
+
 	data, err := proto.Marshal(in)
 	if err != nil {
 		logger.Sugar().Errorf("Marshal SendMicroserviceComm failed: %s", err)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	// Logging of data send for compression testing
-	logger.Sugar().Debugf("**********************Microservice communication type (in go/cmd/sidecar/rabbit_send.go): %s", in.Type)
-	logger.Sugar().Debugf("**********************Microservice communication request type (in go/cmd/sidecar/rabbit_send.go): %s", in.RequestType)
-	logger.Sugar().Debugf("**********************Microservice communication data size (in go/cmd/sidecar/rabbit_send.go): %d", len(in.RequestType))
-	logger.Sugar().Debugf("**********************Microservice communication result (in go/cmd/sidecar/rabbit_send.go): %s", in.Result)
-	logger.Sugar().Debugf("**********************Microservice communication data (in go/cmd/sidecar/rabbit_send.go): %v", data)
-	// TODO: compress something in data here, such as .Result?
+	// TODO compression: remove this logging later as well
+	// Convert the serialized data back to a protobuf message
+    var unmarshaledMessage pb.MicroserviceCommunication
+    err = proto.Unmarshal(data, &unmarshaledMessage)
+    if err != nil {
+        logger.Sugar().Errorf("Failed to unmarshal data: %s", err)
+        return nil, status.Error(codes.Internal, err.Error())
+    }
+    // Convert the protobuf message to a JSON string
+    messageJSON, err := protojson.Marshal(&unmarshaledMessage)
+    if err != nil {
+        logger.Sugar().Errorf("Failed to marshal message to JSON: %s", err)
+        return nil, status.Error(codes.Internal, err.Error())
+    }
+    // Print the JSON string
+    logger.Sugar().Debugf("**********************Serialized data (JSON) (in go/cmd/sidecar/rabbit_send.go): %s", messageJSON)
+	// TODO compression: result field now compressed in data?
 
 	message := amqp.Publishing{
 		CorrelationId: in.RequestMetadata.CorrelationId,

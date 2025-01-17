@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	pb "github.com/Jorrit05/DYNAMOS/pkg/proto"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -49,9 +50,16 @@ func (s *SharedServer) SendData(ctx context.Context, data *pb.MicroserviceCommun
 	// Logging of data send for compression testing
 	logger.Sugar().Debugf("**********************Microservice communication type (in go/pkg/lib/grpc_server.go): %s", data.Type)
 	logger.Sugar().Debugf("**********************Microservice communication request type (in go/pkg/lib/grpc_server.go): %s", data.RequestType)
-	logger.Sugar().Debugf("**********************Microservice communication data size (in go/pkg/lib/grpc_server.go): %d", len(data.RequestType))
-	logger.Sugar().Debugf("**********************Microservice communication result (in go/pkg/lib/grpc_server.go): %d", len(data.Result))
-	// TODO: compress result again here
+	// Convert the google.protobuf.Struct to a JSON string
+    dataJSON, err := protojson.Marshal(data.Data)
+    if err != nil {
+        logger.Sugar().Errorf("Failed to marshal data to JSON: %s", err)
+    }
+	logger.Sugar().Debugf("**********************Microservice communication data (in go/pkg/lib/grpc_server.go): %s", dataJSON)
+	logger.Sugar().Debugf("**********************Microservice communication result (in go/pkg/lib/grpc_server.go): %s", data.Result)
+	// TODO compression: compress result again here
+	// TODO compression: found here that this SendData is used by the query services, such as sql-query and sql-algorithm.
+	// these services ONLY change the 'data' field, the 'result field here is still empty all the time.
 
 	ctx, span, err := StartRemoteParentSpan(ctx, fmt.Sprintf("%s SendData/func:", s.ServiceName), data.Traces)
 	if err != nil {

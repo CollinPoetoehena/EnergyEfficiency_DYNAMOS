@@ -20,6 +20,7 @@ import threading
 from opentelemetry import trace
 from google.protobuf.empty_pb2 import Empty
 from typing import Callable, Dict
+from google.protobuf.json_format import MessageToJson
 
 import health_pb2_grpc as healthServer
 import health_pb2 as healthTypes
@@ -98,9 +99,10 @@ class MicroserviceServicer(msCommServer.MicroserviceServicer):
         # Logging of data send for compression testing
         self.logger.debug(f"**********************Microservice communication type (in python/dynamos-python-lib/dynamos/grpc_server.py): {msComm.type}")
         self.logger.debug(f"**********************Microservice communication request type (in python/dynamos-python-lib/dynamos/grpc_server.py): {msComm.request_type}")
-        self.logger.debug(f"**********************Microservice communication data size (in python/dynamos-python-lib/dynamos/grpc_server.py): {len(msComm.data)}")
+        data_json = MessageToJson(msComm.data)
+        self.logger.debug(f"**********************Microservice communication data (in python/dynamos-python-lib/dynamos/grpc_server.py): {data_json}")
         self.logger.debug(f"**********************Microservice communication result (in python/dynamos-python-lib/dynamos/grpc_server.py): {msComm.result}")
-        # TODO: compress result here with gzip
+        # TODO compression: compress result here with gzip
 
         span = trace.get_current_span()
         try:
