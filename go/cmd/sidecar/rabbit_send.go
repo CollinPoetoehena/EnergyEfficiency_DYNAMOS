@@ -277,6 +277,25 @@ func (s *serverInstance) SendMicroserviceComm(ctx context.Context, in *pb.Micros
     logger.Sugar().Debugf("**********************Serialized data (JSON) (in go/cmd/sidecar/rabbit_send.go): %s", messageJSON)
 	// TODO compression: result field now compressed in data?
 
+	// TODO compression: when testing this with compute to Data archetype this was the result:
+	/*
+	2025-01-17T10:45:05.829810935Z sidecar 1.737110705829561e+09    DEBUG    /app/cmd/sidecar/rabbit_send.go:252    
+	**********************Microservice communication data (in go/cmd/sidecar/rabbit_send.go): {}  │
+│ 2025-01-17T10:45:05.829817797Z sidecar 1.7371107058295848e+09    DEBUG    /app/cmd/sidecar/rabbit_send.go:253    
+**********************Microservice communication result (in go/cmd/sidecar/rabbit_send.go):  │
+│ 2025-01-17T10:45:05.829884542Z sidecar 1.737110705829745e+09    DEBUG    /app/cmd/sidecar/rabbit_send.go:277    
+**********************Serialized data (JSON) (in go/cmd/sidecar/rabbit_send.go): {"type":"mic │
+│ roserviceCommunication", "requestType":"sqlDataRequest", "originalRequest":{"@type":"type.googleapis.com/dynamos.SqlDataRequest", "type":"sqlDataRequest", "query":"SELECT DISTINCT p.Unieknr, p.Geslacht, p. │
+│ Gebdat, s.Aanst_22, s.Functcat, s.Salschal as Salary FROM Personen p JOIN Aanstellingen s ON p.Unieknr = s.Unieknr LIMIT 5", "user":{"id":"12324", "userName":"jorrit.stutterheim@cloudnation.nl"}, "requestM │
+│ etadata":{"jobId":"jorrit-stutterheim-fe4a5185"}, "options":{"aggregate":false, "graph":false}}, "requestMetadata":{"correlationId":"e98d7275-d169-4539-82f6-61c2ec0c76c5", "destinationQueue":"jorrit-stutte │
+│ rheim-fe4a5185uva1", "returnAddress":"UVA-in"}} 
+	*/
+	// As you can see, there is no result and no data field set, and the body is the serialized JSON part, which is just the orignial request as 
+	// MicroserviceCommunication .proto message, but the fields 'data' and 'result' are not present. 
+	// TODO: test this for data through TTP archetype as well! If the same is found there, then no compression is necessary here and no changes in this part
+	// are required, only in the other parts!
+	
+
 	message := amqp.Publishing{
 		CorrelationId: in.RequestMetadata.CorrelationId,
 		Body:          data,

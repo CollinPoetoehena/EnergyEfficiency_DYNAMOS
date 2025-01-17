@@ -186,6 +186,12 @@ func (s *serverInstance) SendData(ctx context.Context, data *pb.MicroserviceComm
 	logger.Sugar().Debugf("**********************Microservice communication data (in go/cmd/sidecar/grpc_server.go): %s", dataJSON)
 	logger.Sugar().Debugf("**********************Microservice communication result (in go/cmd/sidecar/grpc_server.go): %s", data.Result)
 	// TODO compression: compress result again here
+	// TODO compression: here the only fields used are data and result at the end of the job, so service1->service2->sidecar
+	// then the final part (sidecar) is where the data and result are present. These fields both need to be compressed.
+	// TODO: only compress result and data if they are higher than a certain threshold, such as 300 bytes. This ensures the other communications through this function
+	// are not compressed when 
+
+	// TODO: so here only data and result fields need to be compressed, but only if the 
 
 	ctx, span, err := lib.StartRemoteParentSpan(ctx, "sidecar SendData/func:", data.Traces)
 	if err != nil {

@@ -61,6 +61,9 @@ func (s *SharedServer) SendData(ctx context.Context, data *pb.MicroserviceCommun
 	// TODO compression: found here that this SendData is used by the query services, such as sql-query and sql-algorithm.
 	// these services ONLY change the 'data' field, the 'result field here is still empty all the time.
 
+	// TODO: so here only the data field needs to be compressed
+	// TODO: how to do decompressing, figure that out. But first add compression.
+
 	ctx, span, err := StartRemoteParentSpan(ctx, fmt.Sprintf("%s SendData/func:", s.ServiceName), data.Traces)
 	if err != nil {
 		logger.Sugar().Warnf("Error starting span: %v", err)

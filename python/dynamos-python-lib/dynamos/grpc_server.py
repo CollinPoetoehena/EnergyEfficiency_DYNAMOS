@@ -104,6 +104,9 @@ class MicroserviceServicer(msCommServer.MicroserviceServicer):
         self.logger.debug(f"**********************Microservice communication result (in python/dynamos-python-lib/dynamos/grpc_server.py): {msComm.result}")
         # TODO compression: compress result here with gzip
 
+        # TODO compression: here the data is {}, so probably no compression has to be done here in the Python code, can just be in go code.
+        # TODO: but test this with data through ttp archetype as well
+
         span = trace.get_current_span()
         try:
             # Start a new span
