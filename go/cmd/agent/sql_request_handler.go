@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"encoding/base64"
 
 	"github.com/Jorrit05/DYNAMOS/pkg/api"
 	"github.com/Jorrit05/DYNAMOS/pkg/etcd"
@@ -114,7 +115,23 @@ func sqlDataRequestHandler() http.HandlerFunc {
 			logger.Sugar().Debugf("Got result (size): %d", len(msComm.Result))
 			// logger.Sugar().Debugf("Result: %s", msComm.Result)
 
-			// TODO: check if compression is used, if so, decompress
+			// Check if compression is used, if so, decompress it before sending it to the user
+			if msComm.ResultCompressed {
+				// Decode the Base64 encoded string
+				decodedData, err := base64.StdEncoding.DecodeString(string(msComm.Result))
+				if err != nil {
+					logger.Sugar().Errorf("Failed to decode Base64 data.Result: %s", err)
+				}
+		
+				// Decompress the data
+				decompressedData, err := lib.Decompress(decodedData)
+				if err != nil {
+					logger.Sugar().Errorf("Failed to decompress data.Result: %s", err)
+				}
+		
+				// Convert the decompressed data back to a string
+				msComm.Result = decompressedData
+			}
 			
 			//Handle response information
 			w.WriteHeader(http.StatusOK)

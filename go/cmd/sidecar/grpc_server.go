@@ -199,7 +199,7 @@ func (s *serverInstance) SendData(ctx context.Context, data *pb.MicroserviceComm
 	// TODO:
 	// Data field is compressed already because of the SendData function from previous services (verified in logs)
 	// So, only the result field here has to be compressed. To avoid very small results compression, set a threshold 
-	// in nr of characters to avoid compressing small results (e.g. average fields only)
+	// in nr of bytes to avoid compressing small results (e.g. average fields only)
 	if data.Result != nil && len(data.Result) > 100 {
 		// Convert the string to a byte slice
         resultBytes := []byte(data.Result)
