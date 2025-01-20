@@ -3,9 +3,13 @@ package lib
 import (
 	"context"
 	"fmt"
+	"bytes"
+	"compress/gzip"
 
 	pb "github.com/Jorrit05/DYNAMOS/pkg/proto"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -63,6 +67,32 @@ func (s *SharedServer) SendData(ctx context.Context, data *pb.MicroserviceCommun
 
 	// TODO: so here only the data field needs to be compressed
 	// TODO: how to do decompressing, figure that out. But first add compression.
+	// Always compress the data field if it is not nil (data field contains the data results between the different services)
+	// Compress the `data.Data` field if it is not nil
+	if data.Data != nil {
+		// Serialize the Struct to a byte slice (required to extract bytes from the Struct type)
+		serializedData, err := proto.Marshal(data.Data)
+		logger.Sugar().Debugf("**********************Microservice communication serialized data size (in go/pkg/lib/grpc_server.go): %d", len(serializedData))
+		if err != nil {
+			logger.Sugar().Errorf("Failed to serialize data.Data field: %s", err)
+		} else {
+			// Compress the serialized data
+			compressedData, err := compress(serializedData)
+			if err != nil {
+				logger.Sugar().Errorf("Failed to compress data.Data field: %s", err)
+			} else {
+				logger.Sugar().Debugf("**********************Microservice communication data compressed size (in go/pkg/lib/grpc_server.go): %d", len(compressedData))
+				// Store the compressed data as raw bytes string value in a new struct
+				compressedStruct := &structpb.Struct{
+					Fields: map[string]*structpb.Value{
+						"compressed_data": {Kind: &structpb.Value_StringValue{StringValue: string(compressedData)}},
+					},
+				}
+				// Replace the original Struct with the compressed version
+				data.Data = compressedStruct
+			}
+		}
+	}
 
 	ctx, span, err := StartRemoteParentSpan(ctx, fmt.Sprintf("%s SendData/func:", s.ServiceName), data.Traces)
 	if err != nil {
@@ -80,4 +110,20 @@ func (s *SharedServer) SendData(ctx context.Context, data *pb.MicroserviceCommun
 		return &pb.ContinueReceiving{ContinueReceiving: false}, fmt.Errorf("unknown message type: %s", data.Type)
 	}
 	return &pb.ContinueReceiving{ContinueReceiving: false}, err
+}
+
+
+// compress compresses a given byte slice using gzip.
+func compress(input []byte) ([]byte, error) {
+	var buf bytes.Buffer
+	writer := gzip.NewWriter(&buf)
+	_, err := writer.Write(input)
+	if err != nil {
+		return nil, err
+	}
+	err = writer.Close()
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }

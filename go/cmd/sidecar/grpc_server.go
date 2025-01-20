@@ -192,6 +192,7 @@ func (s *serverInstance) SendData(ctx context.Context, data *pb.MicroserviceComm
 	// are not compressed when 
 
 	// TODO: so here only data and result fields need to be compressed, but only if the 
+	
 
 	ctx, span, err := lib.StartRemoteParentSpan(ctx, "sidecar SendData/func:", data.Traces)
 	if err != nil {
