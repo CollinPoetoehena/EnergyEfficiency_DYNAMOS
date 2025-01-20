@@ -23,6 +23,7 @@ message MicroserviceCommunication {
   map<string, bytes> traces = 7;// Binary or textual representation of span context
   bytes result = 8;
   repeated string routing_data = 9; // To be used for persistent jobs
+  bool result_compressed = 10; // Used to check if result data is compressed
 }
 
 message ContinueReceiving {

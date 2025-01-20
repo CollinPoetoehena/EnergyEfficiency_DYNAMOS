@@ -42,8 +42,6 @@ import (
 func SendDataThroughAMQ(ctx context.Context, data *pb.MicroserviceCommunication, s *serverInstance) (*emptypb.Empty, error) {
 	logger.Debug("Starting lib.SendDataThroughAMQ")
 
-	// TODO compression: compression probably does not have to be done here, it is done in the SendData that calls this function!?!?
-
 	ctx, span := trace.StartSpan(ctx, "sidecar SendDataThroughAMQ/func:")
 
 	// Marshaling google.protobuf.Struct to Proto wire format

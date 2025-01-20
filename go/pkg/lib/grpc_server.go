@@ -65,7 +65,7 @@ func (s *SharedServer) SendData(ctx context.Context, data *pb.MicroserviceCommun
 				// Encode compressed data in Base64
 				encodedData := base64.StdEncoding.EncodeToString(compressedData)
 
-				// Store the compressed data as raw bytes string value in a new struct
+				// Store the compressed and encoded data as raw bytes string value in a new struct
 				// Base64 avoids problems like: grpc: error while marshaling: string field contains invalid UTF-8
 				compressedStruct := &structpb.Struct{
 					Fields: map[string]*structpb.Value{

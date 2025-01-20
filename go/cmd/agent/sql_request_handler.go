@@ -113,6 +113,8 @@ func sqlDataRequestHandler() http.HandlerFunc {
 			span.AddAttributes(trace.Int64Attribute("sqlDataRequestHandler.String.messageSize", int64(len(msComm.Result))))
 			logger.Sugar().Debugf("Got result (size): %d", len(msComm.Result))
 			// logger.Sugar().Debugf("Result: %s", msComm.Result)
+
+			// TODO: check if compression is used, if so, decompress
 			
 			//Handle response information
 			w.WriteHeader(http.StatusOK)

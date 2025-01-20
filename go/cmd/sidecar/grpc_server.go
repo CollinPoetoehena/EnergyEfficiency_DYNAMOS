@@ -18,6 +18,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"encoding/base64"
 
 	"github.com/Jorrit05/DYNAMOS/pkg/lib"
 	pb "github.com/Jorrit05/DYNAMOS/pkg/proto"
@@ -195,6 +196,29 @@ func (s *serverInstance) SendData(ctx context.Context, data *pb.MicroserviceComm
 
 	// TODO: use lib.compress and lib.decompress
 
+	// TODO:
+	// Data field is compressed already because of the SendData function from previous services (verified in logs)
+	// So, only the result field here has to be compressed. To avoid very small results compression, set a threshold 
+	// in nr of characters to avoid compressing small results (e.g. average fields only)
+	if data.Result != nil && len(data.Result) > 100 {
+		// Convert the string to a byte slice
+        resultBytes := []byte(data.Result)
+		// Compress the serialized data using the compress function from compression.go in the same package as this file
+		compressedData, err := lib.Compress(resultBytes)
+		if err != nil {
+			logger.Sugar().Errorf("Failed to compress data.Data field: %s", err)
+		} else {
+			// Encode compressed data in Base64
+			// Base64 avoids problems like: grpc: error while marshaling: string field contains invalid UTF-8
+			encodedData := base64.StdEncoding.EncodeToString(compressedData)
+			// Replace the original data with the compressed version
+			data.Result = []byte(encodedData)
+			// Set compression flag in .proto message
+            data.ResultCompressed = true
+		}
+	}
+	// Compressed data.Data and data.Result fields will now be used for further processing, i.e.,
+	// when sending the data through AMQ
 
 	ctx, span, err := lib.StartRemoteParentSpan(ctx, "sidecar SendData/func:", data.Traces)
 	if err != nil {
