@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"io"
+	"encoding/base64"
 
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -37,8 +38,22 @@ func Decompress(input []byte) ([]byte, error) {
 
 // Helper function to get and decompress the value from the data
 func GetDecompressedValue(data *structpb.Struct) ([]byte, error) {
-    compressedValue := data.Fields["compressed_data"].GetStringValue()
-    return Decompress([]byte(compressedValue))
+	// Decode the Base64-encoded compressed data
+	compressedBase64 := data.Fields["compressed_data"].GetStringValue()
+	compressedBytes, err := base64.StdEncoding.DecodeString(compressedBase64)
+	if err != nil {
+		logger.Sugar().Errorf("Failed to decode Base64 data: %s", err)
+		return nil, err
+	}
+
+	// Decompress the data
+	decompressedData, err := Decompress(compressedBytes)
+	if err != nil {
+		logger.Sugar().Errorf("Failed to decompress data: %s", err)
+		return nil, err
+	}
+
+    return decompressedData, nil
 }
 
 // // Helper function to get the compressed value from the data
