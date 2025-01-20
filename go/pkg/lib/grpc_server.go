@@ -50,29 +50,10 @@ func (s *SharedServer) InitTracer(ctx context.Context, in *pb.ServiceName) (*emp
 func (s *SharedServer) SendData(ctx context.Context, data *pb.MicroserviceCommunication) (*pb.ContinueReceiving, error) {
 	logger.Sugar().Debugf("Starting (to next MS) lib.SendData: %v", data.RequestMetadata.DestinationQueue)
 
-	// Logging of data send for compression testing
-	// logger.Sugar().Debugf("**********************Microservice communication type (in go/pkg/lib/grpc_server.go): %s", data.Type)
-	// logger.Sugar().Debugf("**********************Microservice communication request type (in go/pkg/lib/grpc_server.go): %s", data.RequestType)
-	// // Convert the google.protobuf.Struct to a JSON string
-    // dataJSON, err := protojson.Marshal(data.Data)
-    // if err != nil {
-    //     logger.Sugar().Errorf("Failed to marshal data to JSON: %s", err)
-    // }
-	// logger.Sugar().Debugf("**********************Microservice communication data (in go/pkg/lib/grpc_server.go): %s", dataJSON)
-	// logger.Sugar().Debugf("**********************Microservice communication result (in go/pkg/lib/grpc_server.go): %s", data.Result)
-	// TODO compression: compress result again here
-	// TODO compression: found here that this SendData is used by the query services, such as sql-query and sql-algorithm.
-	// these services ONLY change the 'data' field, the 'result field here is still empty all the time.
-
-	// TODO: so here only the data field needs to be compressed
-	// TODO: how to do decompressing, figure that out. But first add compression.
-	// Always compress the data field if it is not nil (data field contains the data results between the different services)
-	// Compress the `data.Data` field if it is not nil
-	logger.Sugar().Debugf("******Data from .proto message (updated file): %v", data.Data)
+	// Compress the data field if it is not nil (data field contains the data results between the different services)
 	if data.Data != nil {
 		// Serialize the Struct to a byte slice (required to extract bytes from the Struct type)
 		serializedData, err := proto.Marshal(data.Data)
-		// logger.Sugar().Debugf("**********************Microservice communication serialized data size (in go/pkg/lib/grpc_server.go): %d", len(serializedData))
 		if err != nil {
 			logger.Sugar().Errorf("Failed to serialize data.Data field: %s", err)
 		} else {
@@ -81,7 +62,6 @@ func (s *SharedServer) SendData(ctx context.Context, data *pb.MicroserviceCommun
 			if err != nil {
 				logger.Sugar().Errorf("Failed to compress data.Data field: %s", err)
 			} else {
-				// logger.Sugar().Debugf("**********************Microservice communication data compressed size (in go/pkg/lib/grpc_server.go): %d", len(compressedData))
 				// Encode compressed data in Base64
 				encodedData := base64.StdEncoding.EncodeToString(compressedData)
 

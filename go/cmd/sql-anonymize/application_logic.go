@@ -4,6 +4,9 @@ import (
 	"context"
 
 	pb "github.com/Jorrit05/DYNAMOS/pkg/proto"
+	"github.com/Jorrit05/DYNAMOS/pkg/lib"
+
+	"google.golang.org/protobuf/proto"
 	"github.com/gogo/protobuf/jsonpb"
 	"go.opencensus.io/trace"
 	"go.opencensus.io/trace/propagation"
@@ -23,14 +26,31 @@ func handleSqlDataRequest(ctx context.Context, msComm *pb.MicroserviceCommunicat
 		return ctx, err
 	}
 
-	anonymizeDatesInStruct(msComm.Data)
+	// TODO: currently in DYNAMOS anonymize is not used anymore I believe, however, still decompress logic is 
+	// TODO: added, but when used again, test requesting data to see if decompression works just to be sure
+	// Get and decompress the value from the data
+	decompressedData, err := lib.GetDecompressedValue(msComm.Data)
+    if err != nil {
+        logger.Sugar().Errorf("Failed to decompress data: %s", err)
+		return ctx, err
+    } else {
+        logger.Sugar().Debugf("*********Decompressed data size: %d", len(decompressedData))
+    }
+    // Unmarshal the decompressed data into a structpb.Struct
+    decompressedStruct := &structpb.Struct{}
+    if err := proto.Unmarshal(decompressedData, decompressedStruct); err != nil {
+        logger.Sugar().Errorf("Failed to unmarshal decompressed data: %s", err)
+		return ctx, err
+    }
+
+	anonymizeDatesInStruct(decompressedStruct)
 
 	if sqlDataRequest.Options["graph"] {
-		// jsonString, _ := json.Marshal(msComm.Data)
+		// jsonString, _ := json.Marshal(decompressedStruct)
 		// msComm.Result = jsonString
 
 		m := &jsonpb.Marshaler{}
-		jsonString, _ := m.MarshalToString(msComm.Data)
+		jsonString, _ := m.MarshalToString(decompressedStruct)
 		msComm.Result = []byte(jsonString)
 
 		return ctx, nil
