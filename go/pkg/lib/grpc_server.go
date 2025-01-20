@@ -68,7 +68,7 @@ func (s *SharedServer) SendData(ctx context.Context, data *pb.MicroserviceCommun
 	// TODO: how to do decompressing, figure that out. But first add compression.
 	// Always compress the data field if it is not nil (data field contains the data results between the different services)
 	// Compress the `data.Data` field if it is not nil
-	logger.Sugar().Debugf("******Data from .proto message: %v", data.Data)
+	logger.Sugar().Debugf("******Data from .proto message (updated file): %v", data.Data)
 	if data.Data != nil {
 		// Serialize the Struct to a byte slice (required to extract bytes from the Struct type)
 		serializedData, err := proto.Marshal(data.Data)
@@ -92,10 +92,8 @@ func (s *SharedServer) SendData(ctx context.Context, data *pb.MicroserviceCommun
 						"compressed_data": {Kind: &structpb.Value_StringValue{StringValue: encodedData}},
 					},
 				}
-				logger.Sugar().Debugf("Compressed struct: %v", compressedStruct)
 				// Replace the original Struct with the compressed version
 				data.Data = compressedStruct
-				// TODO: due to assignment of compressed struct, it has an infinite wait and request times out, error somewhere?
 			}
 		}
 	}

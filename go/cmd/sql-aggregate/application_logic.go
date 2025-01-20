@@ -14,6 +14,9 @@ import (
 	"context"
 
 	pb "github.com/Jorrit05/DYNAMOS/pkg/proto"
+	"github.com/Jorrit05/DYNAMOS/pkg/lib"
+
+	"google.golang.org/protobuf/proto"
 	"go.opencensus.io/trace"
 	"go.opencensus.io/trace/propagation"
 	structpb "google.golang.org/protobuf/types/known/structpb"
@@ -25,11 +28,29 @@ func handleSqlDataRequest(ctx context.Context, msCommList []*pb.MicroserviceComm
 	defer span.End()
 	logger.Sugar().Infof("Start %s handleSqlDataRequest", serviceName)
 
+	// Decompress every data field in msCommList
+    for _, msComm := range msCommList {
+        // Get and decompress the value from the data
+        decompressedData, err := lib.GetDecompressedValue(msComm.Data)
+        if err != nil {
+            logger.Sugar().Errorf("Failed to decompress data: %s", err)
+            return ctx, nil, nil
+        } else {
+            logger.Sugar().Debugf("*********Decompressed data size: %d", len(decompressedData))
+        }
+        // Unmarshal the decompressed data into a structpb.Struct
+        decompressedStruct := &structpb.Struct{}
+        if err := proto.Unmarshal(decompressedData, decompressedStruct); err != nil {
+            logger.Sugar().Errorf("Failed to unmarshal decompressed data: %s", err)
+            return ctx, nil, nil
+        }
+        // Replace the original Data field with the decompressed struct (required for further processing below)
+        msComm.Data = decompressedStruct
+    }
+
 	if len(msCommList) < 2 {
 		return ctx, msCommList[0], nil
 	}
-
-	// TODO: add decompression here where applicable
 
 	// Coordinator ensures all services are started before further processing messages
 	msCommList[0].Traces["binaryTrace"] = propagation.Binary(span.SpanContext())
@@ -48,7 +69,6 @@ func mergeData(msCommList []*pb.MicroserviceCommunication) *pb.MicroserviceCommu
 		mergedData.Fields[key] = value
 	}
 	for _, msComm := range msCommList {
-
 		// Merge rest of the data into mergedData, checking for and handling identical fields
 		for key, value2 := range msComm.Data.GetFields() {
 

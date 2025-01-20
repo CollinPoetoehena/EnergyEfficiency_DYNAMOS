@@ -72,7 +72,6 @@ func handleSqlDataRequest(ctx context.Context, msComm *pb.MicroserviceCommunicat
 	// 	fmt.Printf("Key: %s, Value: %+v\n", key, value)
 	// }
 
-	// // TODO: decompress data field and replace msComm.Data below with decompressedData (it is compressed for sure)
 	// Get and decompress the value from the data
 	decompressedData, err := lib.GetDecompressedValue(msComm.Data)
     if err != nil {
@@ -122,8 +121,6 @@ func handleSqlDataRequest(ctx context.Context, msComm *pb.MicroserviceCommunicat
 	// Process all data to make this service more realistic.
 	ctx, allResults := convertAllData(ctx, decompressedStruct)
 	msComm.Result = allResults
-
-	logger.Sugar().Debugf("*********Final data result after sql-algorithm: %s", msComm.Result)
 
 	return nil
 }
@@ -196,6 +193,7 @@ func getFirstRow(data *structpb.Struct) []byte {
 }
 
 func getAverage(data *structpb.Struct) []byte {
+	logger.Sugar().Debugf("*********Data in getAverage function in sql-aggregate: %v", data)
 
 	gendersField, ok1 := data.GetFields()["Geslacht"]
 	salariesField, ok2 := data.GetFields()["Salschal"]
