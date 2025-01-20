@@ -29,6 +29,8 @@ func handleSqlDataRequest(ctx context.Context, msCommList []*pb.MicroserviceComm
 		return ctx, msCommList[0], nil
 	}
 
+	// TODO: add decompression here where applicable
+
 	// Coordinator ensures all services are started before further processing messages
 	msCommList[0].Traces["binaryTrace"] = propagation.Binary(span.SpanContext())
 	mergedMsComm := mergeData(msCommList)

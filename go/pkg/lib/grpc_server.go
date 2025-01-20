@@ -3,8 +3,6 @@ package lib
 import (
 	"context"
 	"fmt"
-	"bytes"
-	"compress/gzip"
 
 	pb "github.com/Jorrit05/DYNAMOS/pkg/proto"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -76,8 +74,8 @@ func (s *SharedServer) SendData(ctx context.Context, data *pb.MicroserviceCommun
 		if err != nil {
 			logger.Sugar().Errorf("Failed to serialize data.Data field: %s", err)
 		} else {
-			// Compress the serialized data
-			compressedData, err := compress(serializedData)
+			// Compress the serialized data using the compress function from compression.go in the same package as this file
+			compressedData, err := Compress(serializedData)
 			if err != nil {
 				logger.Sugar().Errorf("Failed to compress data.Data field: %s", err)
 			} else {
@@ -110,20 +108,4 @@ func (s *SharedServer) SendData(ctx context.Context, data *pb.MicroserviceCommun
 		return &pb.ContinueReceiving{ContinueReceiving: false}, fmt.Errorf("unknown message type: %s", data.Type)
 	}
 	return &pb.ContinueReceiving{ContinueReceiving: false}, err
-}
-
-
-// compress compresses a given byte slice using gzip.
-func compress(input []byte) ([]byte, error) {
-	var buf bytes.Buffer
-	writer := gzip.NewWriter(&buf)
-	_, err := writer.Write(input)
-	if err != nil {
-		return nil, err
-	}
-	err = writer.Close()
-	if err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
 }
