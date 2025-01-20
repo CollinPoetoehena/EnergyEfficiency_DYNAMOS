@@ -7,10 +7,10 @@ import (
 	"strconv"
 
 	pb "github.com/Jorrit05/DYNAMOS/pkg/proto"
-    // "github.com/Jorrit05/DYNAMOS/pkg/lib"
+    "github.com/Jorrit05/DYNAMOS/pkg/lib"
 
-	// "google.golang.org/protobuf/proto"
-	// "github.com/gogo/protobuf/jsonpb"
+	"google.golang.org/protobuf/proto"
+	"github.com/gogo/protobuf/jsonpb"
 	"go.opencensus.io/trace"
 	"go.opencensus.io/trace/propagation"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -72,22 +72,21 @@ func handleSqlDataRequest(ctx context.Context, msComm *pb.MicroserviceCommunicat
 	// 	fmt.Printf("Key: %s, Value: %+v\n", key, value)
 	// }
 
-
 	// // TODO: decompress data field and replace msComm.Data below with decompressedData (it is compressed for sure)
-	// // Get and decompress the value from the data
-	// decompressedData, err := lib.GetDecompressedValue(msComm.Data)
-    // if err != nil {
-    //     logger.Sugar().Errorf("Failed to decompress data: %s", err)
-    //     return err
-    // } else {
-    //     logger.Sugar().Debugf("*********Decompressed data size: %d", len(decompressedData))
-    // }
-    // // Unmarshal the decompressed data into a structpb.Struct
-    // decompressedStruct := &structpb.Struct{}
-    // if err := proto.Unmarshal(decompressedData, decompressedStruct); err != nil {
-    //     logger.Sugar().Errorf("Failed to unmarshal decompressed data: %s", err)
-    //     return err
-    // }
+	// Get and decompress the value from the data
+	decompressedData, err := lib.GetDecompressedValue(msComm.Data)
+    if err != nil {
+        logger.Sugar().Errorf("Failed to decompress data: %s", err)
+        return err
+    } else {
+        logger.Sugar().Debugf("*********Decompressed data size: %d", len(decompressedData))
+    }
+    // Unmarshal the decompressed data into a structpb.Struct
+    decompressedStruct := &structpb.Struct{}
+    if err := proto.Unmarshal(decompressedData, decompressedStruct); err != nil {
+        logger.Sugar().Errorf("Failed to unmarshal decompressed data: %s", err)
+        return err
+    }
 
 	sqlDataRequest := &pb.SqlDataRequest{}
 	if err := msComm.OriginalRequest.UnmarshalTo(sqlDataRequest); err != nil {
@@ -96,41 +95,35 @@ func handleSqlDataRequest(ctx context.Context, msComm *pb.MicroserviceCommunicat
 
 	msComm.Traces["binaryTrace"] = propagation.Binary(span.SpanContext())
 
-	// if sqlDataRequest.Options["graph"] {
-	// 	// jsonString, _ := json.Marshal(decompressedStruct)
-	// 	// msComm.Result = jsonString
+	if sqlDataRequest.Options["graph"] {
+		// jsonString, _ := json.Marshal(decompressedStruct)
+		// msComm.Result = jsonString
 
-	// 	m := &jsonpb.Marshaler{}
-	// 	jsonString, _ := m.MarshalToString(decompressedStruct)
-	// 	msComm.Result = []byte(jsonString)
+		m := &jsonpb.Marshaler{}
+		jsonString, _ := m.MarshalToString(decompressedStruct)
+		msComm.Result = []byte(jsonString)
 
-	// 	return nil
-	// }
+		return nil
+	}
 
-	// if sqlDataRequest.Algorithm == "average" {
-	// 	// jsonString, _ := json.Marshal(decompressedStruct)
-	// 	// msComm.Result = jsonString
+	if sqlDataRequest.Algorithm == "average" {
+		// jsonString, _ := json.Marshal(decompressedStruct)
+		// msComm.Result = jsonString
 
-	// 	msComm.Result = getAverage(decompressedStruct)
-	// 	return nil
-	// }
+		msComm.Result = getAverage(decompressedStruct)
+		return nil
+	}
 
 	// // Just pass on the data for now...
 	// if config.LastService {
-	// 	msComm.Result = getAverage(decompressedStruct)
+	// 	msComm.Result = getAverage(msComm.Data)
 	// }
 
-	// logger.Sugar().Debugf("*********Data after average function (if selected): %s", msComm.Result)
-
 	// Process all data to make this service more realistic.
-	// ctx, allResults := convertAllData(ctx, decompressedStruct)
-	// msComm.Result = allResults
+	ctx, allResults := convertAllData(ctx, decompressedStruct)
+	msComm.Result = allResults
 
-	// TODO: remove later
-	msComm.Result = []byte("test")
-	
-	// logger.Sugar().Debugf("*********Data result at the end: %s", msComm.Result)
-	logger.Sugar().Info("Returning processed data result from sql-algorithm service")
+	logger.Sugar().Debugf("*********Final data result after sql-algorithm: %s", msComm.Result)
 
 	return nil
 }
