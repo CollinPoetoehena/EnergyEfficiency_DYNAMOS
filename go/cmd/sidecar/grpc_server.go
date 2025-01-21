@@ -172,7 +172,7 @@ func (s *serverInstance) Consume(in *pb.ConsumeRequest, stream pb.RabbitMQ_Consu
 //   - ContinueReceiving: A boolean indicating if the sidecar should continue receiving messages
 //   - error: An error if the function fails
 func (s *serverInstance) SendData(ctx context.Context, data *pb.MicroserviceCommunication) (*pb.ContinueReceiving, error) {
-	logger.Sugar().Debugf("*******************Result in SendData in cmd/sidecar: %s", data.Result)
+	logger.Sugar().Debugf("Starting (to AMQ) lib.SendData: %v", data.RequestMetadata.DestinationQueue)
 
 	// Data field is compressed already because of the SendData function from previous services (verified in logs)
 	// So, only the result field here has to be compressed. To avoid very small results compression, set a threshold 

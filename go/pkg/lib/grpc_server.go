@@ -49,8 +49,6 @@ func (s *SharedServer) InitTracer(ctx context.Context, in *pb.ServiceName) (*emp
 func (s *SharedServer) SendData(ctx context.Context, data *pb.MicroserviceCommunication) (*pb.ContinueReceiving, error) {
 	logger.Sugar().Debugf("Starting (to next MS) lib.SendData: %v", data.RequestMetadata.DestinationQueue)
 
-	logger.Sugar().Debugf("*******************Result in SendData in pkg/lib: %s", data.Result)
-
 	// Compress the data field if it is not nil (data field contains the data results between the different services)
 	if data.Data != nil {
 		// Serialize the Struct to a byte slice (required to extract bytes from the Struct type)

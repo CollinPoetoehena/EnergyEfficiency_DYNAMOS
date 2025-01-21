@@ -193,8 +193,6 @@ func getFirstRow(data *structpb.Struct) []byte {
 }
 
 func getAverage(data *structpb.Struct) []byte {
-	logger.Sugar().Debugf("*********Data in getAverage function in sql-aggregate: %v", data)
-
 	gendersField, ok1 := data.GetFields()["Geslacht"]
 	salariesField, ok2 := data.GetFields()["Salschal"]
 
