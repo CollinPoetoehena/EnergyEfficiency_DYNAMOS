@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"crypto/sha256"
+    "encoding/hex"
 
 	"github.com/Jorrit05/DYNAMOS/pkg/api"
 	"github.com/Jorrit05/DYNAMOS/pkg/etcd"
@@ -78,8 +80,16 @@ func sqlDataRequestHandler() http.HandlerFunc {
 		}
 
 		// Create cache key based on request (use existing context (ctx) for redis)
-		// Do this after all the policy checks (including role check)
-		cacheKey := fmt.Sprintf("composition:%s:%s", compositionRequest.JobName, sqlDataRequest.User.UserName)
+        // Do this after all the policy checks (including role check)
+		// Use hashing for efficient storage and retrieval
+        queryHash := sha256.Sum256([]byte(sqlDataRequest.Query))
+        queryHashStr := hex.EncodeToString(queryHash[:])
+        optionsJSON, _ := json.Marshal(sqlDataRequest.Options)
+        optionsHash := sha256.Sum256(optionsJSON)
+        optionsHashStr := hex.EncodeToString(optionsHash[:])
+        cacheKey := fmt.Sprintf("composition:%s:%s:%s:%s:%s", 
+            sqlDataRequest.RequestMetadata.JobId, sqlDataRequest.User.UserName, 
+            queryHashStr, sqlDataRequest.Algorithm, optionsHashStr)
 		logger.Sugar().Debugf("Cache key: %+s", cacheKey)
 		// Check if the response is already cached
 		cachedResponse, err := redisClient.Get(ctx, cacheKey).Result()
