@@ -173,30 +173,6 @@ func (s *serverInstance) Consume(in *pb.ConsumeRequest, stream pb.RabbitMQ_Consu
 //   - ContinueReceiving: A boolean indicating if the sidecar should continue receiving messages
 //   - error: An error if the function fails
 func (s *serverInstance) SendData(ctx context.Context, data *pb.MicroserviceCommunication) (*pb.ContinueReceiving, error) {
-	logger.Sugar().Debugf("Starting (to AMQ) lib.SendData: %v", data.RequestMetadata.DestinationQueue)
-
-	// Logging of data send for compression testing
-	// TODO compression: remove logging later when done
-	logger.Sugar().Debugf("**********************Microservice communication type (in go/cmd/sidecar/grpc_server.go): %s", data.Type)
-	logger.Sugar().Debugf("**********************Microservice communication request type (in go/cmd/sidecar/grpc_server.go): %s", data.RequestType)
-	// Convert the google.protobuf.Struct to a JSON string
-    dataJSON, err := protojson.Marshal(data.Data)
-    if err != nil {
-        logger.Sugar().Errorf("Failed to marshal data to JSON: %s", err)
-    }
-	logger.Sugar().Debugf("**********************Microservice communication data (in go/cmd/sidecar/grpc_server.go): %s", dataJSON)
-	logger.Sugar().Debugf("**********************Microservice communication result (in go/cmd/sidecar/grpc_server.go): %s", data.Result)
-	// TODO compression: compress result again here
-	// TODO compression: here the only fields used are data and result at the end of the job, so service1->service2->sidecar
-	// then the final part (sidecar) is where the data and result are present. These fields both need to be compressed.
-	// TODO: only compress result and data if they are higher than a certain threshold, such as 300 bytes. This ensures the other communications through this function
-	// are not compressed when 
-
-	// TODO: so here only data and result fields need to be compressed, but only if the 
-
-	// TODO: use lib.compress and lib.decompress
-
-	// TODO:
 	// Data field is compressed already because of the SendData function from previous services (verified in logs)
 	// So, only the result field here has to be compressed. To avoid very small results compression, set a threshold 
 	// in nr of bytes to avoid compressing small results (e.g. average fields only)
