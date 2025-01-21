@@ -25,7 +25,6 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -173,6 +172,8 @@ func (s *serverInstance) Consume(in *pb.ConsumeRequest, stream pb.RabbitMQ_Consu
 //   - ContinueReceiving: A boolean indicating if the sidecar should continue receiving messages
 //   - error: An error if the function fails
 func (s *serverInstance) SendData(ctx context.Context, data *pb.MicroserviceCommunication) (*pb.ContinueReceiving, error) {
+	logger.Sugar().Debugf("*******************Result in SendData in cmd/sidecar: %s", data.Result)
+
 	// Data field is compressed already because of the SendData function from previous services (verified in logs)
 	// So, only the result field here has to be compressed. To avoid very small results compression, set a threshold 
 	// in nr of bytes to avoid compressing small results (e.g. average fields only)

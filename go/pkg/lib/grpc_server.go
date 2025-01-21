@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 
 	pb "github.com/Jorrit05/DYNAMOS/pkg/proto"
-	// "google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -49,6 +48,8 @@ func (s *SharedServer) InitTracer(ctx context.Context, in *pb.ServiceName) (*emp
 //   - error: An error if the function fails
 func (s *SharedServer) SendData(ctx context.Context, data *pb.MicroserviceCommunication) (*pb.ContinueReceiving, error) {
 	logger.Sugar().Debugf("Starting (to next MS) lib.SendData: %v", data.RequestMetadata.DestinationQueue)
+
+	logger.Sugar().Debugf("*******************Result in SendData in pkg/lib: %s", data.Result)
 
 	// Compress the data field if it is not nil (data field contains the data results between the different services)
 	if data.Data != nil {
