@@ -21,4 +21,7 @@ var kubeconfig = ""
 var rabbitMqUser = "normal_user"
 var etcdJobRootKey = "/agents/jobs"
 var tracingHost = "collector.linkerd-jaeger:55678"
+// TTL (time-to-live) used for job queue in etcd (in seconds)
 var queueDeleteAfter = int64(600)
+// TODO: remove later, used for old experiments: When you want to have longer jobs, set to 2 hours for example
+// var queueDeleteAfter = int64(7200)
