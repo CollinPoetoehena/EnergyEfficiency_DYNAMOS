@@ -88,8 +88,9 @@ func sqlDataRequestHandler() http.HandlerFunc {
         optionsHash := sha256.Sum256(optionsJSON)
         optionsHashStr := hex.EncodeToString(optionsHash[:])
         cacheKey := fmt.Sprintf("composition:%s:%s:%s:%s:%s", 
-            sqlDataRequest.RequestMetadata.JobId, sqlDataRequest.User.UserName, 
-            queryHashStr, sqlDataRequest.Algorithm, optionsHashStr)
+			// Use role for unique matching between archetypes
+			role, sqlDataRequest.User.UserName, queryHashStr, 
+			sqlDataRequest.Algorithm, optionsHashStr)
 		logger.Sugar().Debugf("Cache key: %+s", cacheKey)
 		// Check if the response is already cached
 		cachedResponse, err := redisClient.Get(ctx, cacheKey).Result()
