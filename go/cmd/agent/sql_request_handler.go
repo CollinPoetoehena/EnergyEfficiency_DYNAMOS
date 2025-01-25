@@ -161,7 +161,7 @@ func sqlDataRequestHandler() http.HandlerFunc {
 			// Store the response in the cache with a TTL (Time-To-Live)
 			// If code gets here no cache hit is found
 			logger.Debug("Storing result in cache...")
-			err = redisClient.Set(ctx, cacheKey, msComm.Result, 5*time.Minute).Err()
+			err = redisClient.Set(ctx, cacheKey, msComm.Result, 10*time.Minute).Err()
 			if err != nil {
 				logger.Sugar().Errorf("Failed to cache response: %v", err)
 				http.Error(w, "Internal server error", http.StatusInternalServerError)
