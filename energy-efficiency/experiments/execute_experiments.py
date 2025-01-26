@@ -97,7 +97,7 @@ def run_experiment(archetype: str, output_dir, exp_rep):
             print("Waiting before next action...")
             # Set to higher interval for compression specifically between actions due to failures otherwise 
             # (other implementations lower intervals works fine, but compression this was required, likely due to higher execution times)
-            time.sleep(9)
+            time.sleep(10)
 
     # Before measuring the active energy, make sure the active period has passed for equal comparisons
     elapsed_time = time.time() - active_start_time
