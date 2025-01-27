@@ -36,3 +36,35 @@ python3.10 execute_experiments.py "ComputeToData" "DataThroughTTP" 30 "baseline"
 python3.10 execute_experiments.py "DataThroughTTP" 30 "caching"
 ```
 Running the scripts from this location is crucial, since the imports are assuming the scripts are run from this location.
+
+
+### Executing anomaly detection
+```sh
+python3.10 detect_anomalies.py "ComputeToData" "baseline"
+# Or with a different prefix or archetype:
+python3.10 detect_anomalies.py "DataThroughTTP" "caching"
+# First try to see what the anomalies are and if you think it should be considered one or not. 
+# Then play around a bit with the values if needed, see TODO in the file
+# Then if you are satisfied with the reported anomalies, you can remove them:
+
+# If you want to remove anomalies, add the --remove flag (BE CAREFUL: this will remove the experiment folders)
+# You can manually verify the files removed in Git source control extension in VSC for example to be sure
+python3.10 detect_anomalies.py "ComputeToData" "baseline" --remove
+# Or different archetype and prefix
+python3.10 detect_anomalies.py "DataThroughTTP" "caching" --remove
+```
+
+### Test normality
+```sh
+python3.10 test_normality.py "ComputeToData" "baseline"
+# Or with a different prefix or archetype:
+python3.10 test_normality.py "DataThroughTTP" "caching"
+```
+
+
+### Executing mean calculation
+```sh
+python3.10 calculate_mean.py "ComputeToData" "baseline"
+# Or with a different prefix or archetype:
+python3.10 calculate_mean.py "DataThroughTTP" "caching"
+```
