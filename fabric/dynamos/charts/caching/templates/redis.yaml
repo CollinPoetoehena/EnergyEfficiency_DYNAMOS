@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: caching
+data:
+  redis.conf: |
+    # Ensure redis accepts connections from other pods (default is within same host/pod: 127.0.0.1)
+    bind 0.0.0.0
+    # Disable protection mode to allow services to connect to Redis (protetection if required is better 
+    # configured outside Redis, such as Kubernetes NetworkPolicies to restrict which pods have access to Redis)
+    protected-mode no
+    # Set empty password for Redis authentication, this simplifies connection logic
+    requirepass ""
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: caching
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      # Use the DYNAMOS core node for this, see https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors
+      nodeSelector:
+        kubernetes.io/hostname: {{ .Values.node }}
+      containers:
+      - name: redis
+        image: redis:{{ .Values.redis.image }}
+        ports:
+        - containerPort: 6379
+        volumeMounts:
+        - name: redis-config
+          mountPath: /usr/local/etc/redis/redis.conf
+          subPath: redis.conf
+        command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+      volumes:
+      - name: redis-config
+        configMap:
+          name: redis-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: caching
+spec:
+  selector:
+    app: redis
+  ports:
+    - protocol: TCP
+      port: 6379
+      targetPort: 6379
+      nodePort: 30006
+  # Allow external access with NodePort, such as using redis-cli in WSL
+  type: NodePort

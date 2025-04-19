@@ -1,0 +1,6 @@
+redis:
+  # See for full versions of images: https://hub.docker.com/_/redis
+  image: 7.4.2
+
+# Use the dynamos-core node for this
+node: dynamos-core
