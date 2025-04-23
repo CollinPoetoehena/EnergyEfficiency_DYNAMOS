@@ -9,6 +9,7 @@ import (
 	"time"
 	"crypto/sha256"
     "encoding/hex"
+	"sort"
 
 	"github.com/Jorrit05/DYNAMOS/pkg/api"
 	"github.com/Jorrit05/DYNAMOS/pkg/etcd"
@@ -87,11 +88,30 @@ func sqlDataRequestHandler() http.HandlerFunc {
         optionsJSON, _ := json.Marshal(sqlDataRequest.Options)
         optionsHash := sha256.Sum256(optionsJSON)
         optionsHashStr := hex.EncodeToString(optionsHash[:])
-        cacheKey := fmt.Sprintf("composition:%s:%s:%s:%s:%s", 
-			// Use role for unique matching between archetypes
-			role, sqlDataRequest.User.UserName, queryHashStr, 
-			sqlDataRequest.Algorithm, optionsHashStr)
+		var cacheKey string
+		// Add data providers if present to allow different requests with different data providers to change the cache. 
+		// If not present, skip it from the cache key. See CompositionRequest and SqlDataRequest structs for possible variables.
+		if len(compositionRequest.DataProviders) > 0 {
+			// Sort the strings to make sure it always is in the same order, otherwise, you might get VU,UVA and UVA,VU another time, still a cache miss.
+			sort.Strings(compositionRequest.DataProviders)
+			// Use strings library to join the data providers
+			dataProvidersStr := strings.Join(compositionRequest.DataProviders, ",")
+			// Create cache key 
+			cacheKey = fmt.Sprintf("composition:%s:%s:%s:%s:%s:%s", 
+				// Use role for unique matching between archetypes
+				role, sqlDataRequest.User.UserName, queryHashStr, 
+				sqlDataRequest.Algorithm, optionsHashStr, dataProvidersStr)
+		} else {
+			cacheKey = fmt.Sprintf("composition:%s:%s:%s:%s:%s", 
+				// Use role for unique matching between archetypes
+				role, sqlDataRequest.User.UserName, queryHashStr, 
+				sqlDataRequest.Algorithm, optionsHashStr)
+		}
 		logger.Sugar().Debugf("Cache key: %+s", cacheKey)
+		// Can be used for debugging and changing the cache key if needed, but comment out in production:
+		// logger.Sugar().Debugf("Composition request: %+v", compositionRequest)
+		// logger.Sugar().Debugf("Composition request data providers: %+v", compositionRequest.DataProviders)
+		// logger.Sugar().Debugf("SQL data request: %+v", sqlDataRequest)
 		// Check if the response is already cached
 		cachedResponse, err := redisClient.Get(ctx, cacheKey).Result()
 		if err == nil {

@@ -13,7 +13,7 @@ require (
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/websocket v1.5.0
 	github.com/rabbitmq/amqp091-go v1.10.0
-	github.com/redis/go-redis/v9 v9.7.0
+	github.com/redis/go-redis/v9 v9.7.3
 	github.com/stretchr/testify v1.9.0
 	github.com/tsenart/vegeta/v12 v12.12.0
 	go.etcd.io/etcd/api/v3 v3.5.12
@@ -23,9 +23,9 @@ require (
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.35.1
 	gotest.tools v2.2.0+incompatible
-	k8s.io/api v0.32.0
-	k8s.io/apimachinery v0.32.0
-	k8s.io/client-go v0.32.0
+	k8s.io/api v0.32.3
+	k8s.io/apimachinery v0.32.3
+	k8s.io/client-go v0.32.3
 )
 
 replace github.com/docker/distribution => github.com/docker/distribution v2.7.1+incompatible
