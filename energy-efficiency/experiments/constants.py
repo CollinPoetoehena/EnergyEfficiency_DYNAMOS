@@ -30,31 +30,27 @@ IDLE_PERIOD = 120  # Idle period in seconds
 ACTIVE_PERIOD = 120  # Active period in seconds
 
 # DYNAMOS requests
-REQUEST_URLS = {
-    "uva": "http://uva.uva.svc.cluster.local:80/agent/v1/sqlDataRequest/uva",
-    "surf": "http://surf.surf.svc.cluster.local:80/agent/v1/sqlDataRequest/surf"
-}
+# Note: this is the new setup with the newest version of DYNAMOS with api-gateway, this is different than the main branch setup.
+REQUEST_URL = "http://api-gateway.api-gateway.svc.cluster.local:80/api/v1/requestApproval"
 HEADERS = {
     "Content-Type": "application/json",
     # Access token required for data requests in DYNAMOS
-    "Authorization": "bearer 1234"
+    "Authorization": "bearer 1234",
 }
-INITIAL_REQUEST_BODY = {
-    "type": "sqlDataRequest",
-    "query": "SELECT DISTINCT p.Unieknr, p.Geslacht, p.Gebdat, s.Aanst_22, s.Functcat, s.Salschal as Salary FROM Personen p JOIN Aanstellingen s ON p.Unieknr = s.Unieknr LIMIT 30000",
-    "algorithm": "",
-    "options": {"graph": False, "aggregate": False},
-    "user": {"id": "12324", "userName": "jorrit.stutterheim@cloudnation.nl"},
-}
-APPROVAL_URL = "http://api-gateway.api-gateway.svc.cluster.local:80/api/v1/requestApproval"
-HEADERS_APPROVAL = {"Content-Type": "application/json"}
-REQUEST_BODY_APPROVAL = {
+REQUEST_BODY = {
     "type": "sqlDataRequest",
     "user": {
         "id": "12324",
         "userName": "jorrit.stutterheim@cloudnation.nl"
     },
-    "dataProviders": ["UVA"]
+    "dataProviders": ["UVA"],
+    "data_request": {
+        "type": "sqlDataRequest",
+        "query": "SELECT DISTINCT p.Unieknr, p.Geslacht, p.Gebdat, s.Aanst_22, s.Functcat, s.Salschal as Salary FROM Personen p JOIN Aanstellingen s ON p.Unieknr = s.Unieknr LIMIT 30000",
+        "algorithm": "",
+        "options": {"graph": False, "aggregate": False},
+        "requestMetadata": {}
+    }
 }
 
 # Update archetypes
@@ -64,13 +60,8 @@ INITIAL_REQUEST_BODY_ARCH = {
     "computeProvider": "dataProvider",
     "resultRecipient": "requestor",
 }
+HEADERS_UPDATE_ARCH = { "Content-Type": "application/json" }
 WEIGHTS = {
     "ComputeToData": 100,
     "DataThroughTTP": 300
 }
-ARCH_DATA_STEWARDS = {
-    # Each archetype has a different data steward it should request the data from
-    "ComputeToData": "uva",
-    "DataThroughTTP": "surf"
-}
-HEADERS_UPDATE_ARCH = { "Content-Type": "application/json" }
