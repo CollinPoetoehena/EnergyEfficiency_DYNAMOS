@@ -272,5 +272,8 @@ func getMicroserviceTag(msName string) string {
 		return tag
 	}
 
-	return "main"
+	// Return tag for specific branch: api-gateway-archetypes-test
+	return "api-gateway-archetypes-test"
+	// Old default: main
+	// return "main"
 }

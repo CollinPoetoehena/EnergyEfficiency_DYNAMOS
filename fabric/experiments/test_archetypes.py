@@ -29,9 +29,9 @@ def switch_archetype(archetype):
     # Wait briefly to ensure the change propagates before next experiment
     time.sleep(5)
 
-def run_requests(data_steward, data_request_url, approval_body, label, count=10):
+def run_requests(data_request_url, request_body, label, count=10):
     """
-    Runs 'count' iterations of request approval + data request with a specified approval body.
+    Runs 'count' iterations of request approval + data request with a specified request body.
     Measures and returns execution times of data requests.
     """
     print(f"\nRunning {label} ({count} iterations)...")
@@ -40,18 +40,9 @@ def run_requests(data_steward, data_request_url, approval_body, label, count=10)
     for i in range(count):
         print(f"Iteration {i+1}/{count}...")
 
-        # ============ STEP 1: Approval Request ============
-        response_approval = requests.post(constants.APPROVAL_URL, json=approval_body, headers=constants.HEADERS_APPROVAL)
-        job_id = handle_request_approval_response(response_approval)
-
-        # ============ STEP 2: Data Request ============
-        request_body = constants.INITIAL_REQUEST_BODY
-        request_body["requestMetadata"] = {"jobId": f"{job_id}"}  # Embed job ID into metadata
-
+        # ============ Approval Request & Data Request in one with API-Gateway ============
         # Set correct host header based on steward (important for routing in Kubernetes)
         headers = constants.HEADERS.copy()
-        headers["Host"] = f"{data_steward}.{data_steward}.svc.cluster.local"
-
         # Send data request and record execution time
         response_data = requests.post(data_request_url, json=request_body, headers=headers)
         exec_time = handle_data_request_response(response_data)
@@ -61,14 +52,6 @@ def run_requests(data_steward, data_request_url, approval_body, label, count=10)
         time.sleep(7)
 
     return exec_times
-
-def handle_request_approval_response(response):
-    """
-    Handles response from approval request, logs status and time,
-    and extracts the job ID needed for the data request.
-    """
-    print(f"Approval: Status {response.status_code}, Time {response.elapsed.total_seconds()}s")
-    return response.json()["jobId"]
 
 def handle_data_request_response(response):
     """
@@ -102,21 +85,17 @@ def run_test():
         # Switch to the selected archetype
         switch_archetype(archetype)
 
-        # Lookup appropriate data steward and URL for this archetype
-        data_steward = constants.ARCH_DATA_STEWARDS[archetype]
-        data_request_url = constants.REQUEST_URLS[data_steward]
-
         # ---------- Test with standard approval request ----------
         result_key_1 = f"Arch{idx+1}_Standard"
         all_results[result_key_1] = run_requests(
-            data_steward, data_request_url, constants.REQUEST_BODY_APPROVAL, label=result_key_1)
+            constants.REQUEST_URL, constants.REQUEST_BODY, label=result_key_1)
 
         # ---------- Test with modified approval request ----------
-        modified_approval = constants.REQUEST_BODY_APPROVAL.copy()
+        modified_approval = constants.REQUEST_BODY.copy()
         modified_approval["dataProviders"] = ["UVA", "VU"]  # Change providers
         result_key_2 = f"Arch{idx+1}_Modified"
         all_results[result_key_2] = run_requests(
-            data_steward, data_request_url, modified_approval, label=result_key_2)
+            constants.REQUEST_URL, modified_approval, label=result_key_2)
 
     # ========== Print Final Summary ==========
     print("\n================== RESULTS SUMMARY ==================")
