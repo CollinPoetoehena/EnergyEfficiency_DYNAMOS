@@ -272,5 +272,8 @@ func getMicroserviceTag(msName string) string {
 		return tag
 	}
 
-	return "main"
+	// Return tag for specific branch: O2-compression
+    return "O2-compression"
+    // Old default: main
+    // return "main"
 }
