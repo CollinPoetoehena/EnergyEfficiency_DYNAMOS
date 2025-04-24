@@ -272,5 +272,9 @@ func getMicroserviceTag(msName string) string {
 		return tag
 	}
 
-	return "main"
+	// Return tag for specific branch: O1-caching
+    return "O1-caching"
+    // Old default: main
+    // return "main"
+
 }
