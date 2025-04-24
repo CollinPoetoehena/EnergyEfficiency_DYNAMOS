@@ -2,7 +2,7 @@ Namespace: orchestrator
 hostPath: default
 etcdDns: etcd-headless.core.svc.cluster.local
 tracingEndpoint: collector.linkerd-jaeger:55678
-branchNameTag: "main"
+branchNameTag: "api-gateway-archetypes-test"
 dockerArtifactAccount: "poetoec"
 # Default DYNAMOS (old):
 # branchNameTag: "main"
