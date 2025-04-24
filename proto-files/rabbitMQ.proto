@@ -103,8 +103,7 @@ message RequestApproval {
   User user = 2;
   repeated string data_providers = 3;
   string destination_queue = 4;
-  // OLD: was part of doing /sqlDataRequest after /requestApproval, now only requests approval
-  // map<string, bool> options = 5;
+  map<string, bool> options = 5;
 }
 
 message RequestApprovalResponse  {
